@@ -36,7 +36,7 @@ const createUser = async () => {
         })
 
         const data = await response.json()
-        console.log(data);
+        // console.log(data);
 
         // SweetAlert2
         if (data.message === "User Created Successfully") {
@@ -110,8 +110,8 @@ const getUser = async () => {
             <td>${user.fullName}</td>
             <td>${user.email}</td>
             <td>${user.password}</td>
-            <td class="center" onclick="update()">✏️</td>
-            <td class="center" onclick="delete()">🗑️</td>
+            <td class="center" onclick="userUpdate('${user.id}')">✏️</td>
+            <td class="center" onclick="userDelete('${user.id}')">🗑️</td>
         </tr>
         `
         });
@@ -151,5 +151,140 @@ const getUser = async () => {
 
 getUser()
 
+
+const userUpdate = async (id) => {
+    const mainContainer = document.getElementById("get-users");
+
+    try {
+        const response = await fetch("http://localhost:5000/getAllUsers");
+        const data = await response.json();
+        const users = data.data;
+
+        const user = users.find((u) => u.id === id);
+        if (!user) {
+            Swal.fire("Error!", "User not found!", "error");
+            return;
+        }
+
+        mainContainer.innerHTML = `
+      <div class="create-user">
+        <h2>Update User</h2>
+        <input id="userFullName" placeholder="Enter Name" value="${user.fullName}" />
+        <input id="UserEmail" placeholder="Enter Email" value="${user.email}" />
+        <input id="UserPassword" placeholder="Enter Password" value="${user.password}" />
+        <button id="updateBtn">Update User</button>
+      </div>
+    `;
+
+        document.getElementById("updateBtn").addEventListener("click", async () => {
+            const userFullName = document.getElementById("userFullName").value.trim();
+            const UserEmail = document.getElementById("UserEmail").value.trim();
+            const UserPassword = document.getElementById("UserPassword").value.trim();
+
+            if (!userFullName || !UserEmail || !UserPassword) {
+                Swal.fire({
+                    title: "Warning!",
+                    text: "Please fill in all input fields!",
+                    icon: "warning",
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+                return;
+            }
+
+            try {
+                const updateResponse = await fetch(`http://localhost:5000/updateuser/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        fullName: userFullName,
+                        email: UserEmail,
+                        password: UserPassword
+                    }),
+                });
+
+                const updateData = await updateResponse.json();
+                // console.log(updateData);
+
+                if (updateResponse.ok) {
+                    Swal.fire("Success!", "User updated successfully!", "success");
+                    getUser();
+                } else {
+                    Swal.fire("Error!", updateData.message || "Failed to update user", "error");
+                }
+            } catch (error) {
+                console.log(error.message);
+                Swal.fire("Error!", error.message, "error");
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        Swal.fire("Error!", "Something went wrong while fetching users!", "error");
+    }
+};
+
+
+
+
+const userDelete = async (id) => {
+
+    // console.log(id);
+
+    try {
+        const response = await fetch("http://localhost:5000/getAllUsers");
+        const data = await response.json();
+        const users = data.data;
+
+        const user = users.find((u) => u.id === id);
+        if (!user) {
+            Swal.fire("Error!", "User not found!", "error");
+            return;
+        }
+
+        // console.log(user);
+
+        try {
+            const deleteResponse  = await fetch(`http://localhost:5000/deleteuser/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const deleteData = await deleteResponse .json();
+
+            if (deleteResponse .ok) {
+                Swal.fire("Success!", "User Deleted successfully!", "success");
+                getUser();
+            } else {
+                Swal.fire("Error!", deleteData.message || "Failed to update user", "error");
+            }
+        } catch (error) {
+            console.log(error.message);
+            Swal.fire("Error!", error.message, "error");
+        }
+
+
+
+
+    } catch (error) {
+        console.log(error.message);
+
+        // SweetAlert2 Error Alert
+        Swal.fire({
+            title: "Error!",
+            text: error.message || "Something went wrong!",
+            icon: "error",
+            confirmButtonText: "OK"
+        });
+
+    }
+
+}
+
 window.createUser = createUser
 window.getUser = getUser
+window.userUpdate = userUpdate
+window.userDelete = userDelete

@@ -53,12 +53,77 @@ app.get("/getAllUsers", (request, response) => {
 
     const getAllUsers = JSON.parse(fs.readFileSync("users.txt", "utf-8"))
     // console.log(getAllUsers);
-    
+
     response.json({
         messsage: "Get All Users Data Successfully",
         data: getAllUsers
     })
 
+})
+
+
+app.put("/updateuser/:id", (request, response) => {
+    const params = request.params.id
+    const body = request.body
+    // console.log("id", params);
+
+    const getUsers = JSON.parse(fs.readFileSync("users.txt", "utf-8"))
+    // console.log(getUsers);
+
+    let userFound = false
+
+    const newArr = getUsers.map((user) => {
+        // console.log("users", user.id);
+        // console.log("users", params);
+
+        if (user.id == params) {
+            userFound = true
+            return { ...user, ...body }
+        } else {
+            return user
+        }
+
+    })
+
+    if (!userFound) {
+        response.json({
+            message: "User not found",
+        })
+    }
+
+    // console.log(newArr);
+    fs.writeFileSync("users.txt", JSON.stringify(newArr))
+
+    response.json({
+        message: "User Updated",
+        data: newArr
+    })
+
+})
+
+
+app.delete("/deleteuser/:userId", (request, response) => {
+    const params = request.params.userId
+    // console.log(params);
+
+    const userData = JSON.parse(fs.readFileSync("users.txt", "utf-8"))
+    // console.log(userData);
+
+    const userIndex = userData.findIndex((user) => user.id == params)
+    console.log(userIndex);
+
+    if (userIndex == -1) {
+        response.json({
+            message: "User Not found"
+        })
+    }
+
+    userData.splice(userIndex, 1)
+    fs.writeFileSync("users.txt", JSON.stringify(userData))
+
+    response.json({
+        message: "User Deleted"
+    })
 })
 
 
